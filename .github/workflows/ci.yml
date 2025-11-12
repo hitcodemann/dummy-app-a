@@ -1,0 +1,43 @@
+name: CI/CD Pipeline Simulation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Main App
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Clone Dependency App B
+        run: |
+          git clone https://github.com/hitcodemann/dummy-app-b.git
+          cp dummy-app-b/math_utils.py .
+
+      - name: Clone Dependency App C
+        run: |
+          git clone https://github.com/hitcodemann/dummy-app-c.git
+          cp dummy-app-c/logger.py .
+
+      - name: Run Pipeline (Success Case)
+        run: |
+          python main_app.py
+
+      - name: Simulate Failure (Uncomment to fail)
+        continue-on-error: true
+        run: |
+          sed -i 's/run_pipeline(5)/run_pipeline(0)/g' main_app.py
+          python main_app.py && exit 1 || echo "Pipeline failed as expected"
+
+      # Uncomment below to force failure on push
+      # - name: Force Fail
+      #   run: exit 1
