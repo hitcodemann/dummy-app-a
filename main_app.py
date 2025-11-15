@@ -1,7 +1,6 @@
 # Simulate importing from dummy-app-b and dummy-app-c
 # In real Jenkins, it will clone them as git submodules or install via pip
 # For demo, we're just showing the dependency structure
-
 def run_pipeline(num_steps=5, force_fail=False):
     """
     Main pipeline: Depends on math_utils and logger.
