@@ -28,33 +28,30 @@ jobs:
           git clone https://github.com/hitcodemann/dummy-app-c.git
           cp dummy-app-c/logger.py .
 
-      - name: Run Pipeline (Success Case)
-        id: run_success
+      - name: Run Pipeline (Normal)
+        id: run_normal
         run: |
-          python main_app.py
+          python main_app.py || echo "NORMAL RUN FAILED"
 
-      - name: Simulate Failure
-        id: run_failure
+      - name: Force Failure
+        id: force_fail
         run: |
-          sed -i 's/run_pipeline(5)/run_pipeline(0)/g' main_app.py
+          echo "Forcing pipeline failure..."
+          sed -i 's/run_pipeline([0-9]*)/run_pipeline(0)/g' main_app.py || true
           python main_app.py && exit 0 || exit 1
-        continue-on-error: true
 
       - name: Send Failure to AWS Lambda
-        if: steps.run_failure.outcome == 'failure'
+        if: always() && steps.force_fail.outcome == 'failure'
         env:
           WEBHOOK_URL: https://ww8cqvvtzg.execute-api.us-east-1.amazonaws.com/prod/webhook
         run: |
-          echo "Pipeline FAILED! Sending to AWS..."
+          echo "SENDING FAILURE TO AWS LAMBDA..."
           curl -X POST "$WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d '{
               "repo": "hitcodemann/dummy-app-a",
               "run_id": "${{ github.run_id }}",
-              "job": "build-and-test",
               "error": "ValueError: Invalid steps: Build cannot proceed!",
-              "failed_step": "Simulate Failure",
-              "timestamp": "${{ github.event.head_commit.timestamp }}",
-              "log_hint": "Check calculate_build_time(0) in main_app.py"
-            }'
-     
+              "log_hint": "Check run_pipeline(0) in main_app.py",
+              "run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }' || echo "CURL FAILED"
