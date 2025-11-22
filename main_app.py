@@ -33,7 +33,7 @@ def run_pipeline(num_steps=5, force_fail=False):
 # Test runs
 if __name__ == "__main__":
     print("=== NORMAL RUN ===")
-    run_pipeline(5)  # Success
+    run_pipeline(0)  # Success
     
     print("\n=== FAILURE SIMULATION ===")
     run_pipeline(5, force_fail=True)  # This will fail
